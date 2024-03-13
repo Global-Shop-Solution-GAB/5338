@@ -1,0 +1,672 @@
+Program.Sub.ScreenSU.Start
+Gui.FormMain..Create
+Gui.FormMain..Caption("Sales and History")
+Gui.FormMain..Size(15360,10050)
+Gui.FormMain..MinX(0)
+Gui.FormMain..MinY(0)
+Gui.FormMain..Position(0,0)
+Gui.FormMain..BackColor(-2147483633)
+Gui.FormMain..MousePointer(0)
+Gui.FormMain..Event(UnLoad,FormMain_UnLoad)
+Gui.FormMain.ggcOrders.Create(GsGridControl)
+Gui.FormMain.ggcOrders.Size(15015,8595)
+Gui.FormMain.ggcOrders.Position(60,135)
+Gui.FormMain.ggcOrders.Anchor(15)
+Gui.FormMain.cmdExport.Create(Button)
+Gui.FormMain.cmdExport.Size(855,375)
+Gui.FormMain.cmdExport.Position(330,8850)
+Gui.FormMain.cmdExport.Caption("Export")
+Gui.FormMain.cmdExport.Event(Click,cmdExport_Click)
+Gui.FormMain.cmdExport.Anchor(6)
+Gui.FormMain.cmdExport.FontStyle(True,False,False,False,False)
+Gui.FormDate..Create
+Gui.FormDate..Caption("DateRange")
+Gui.FormDate..Size(4515,1920)
+Gui.FormDate..MinX(0)
+Gui.FormDate..MinY(0)
+Gui.FormDate..Position(0,0)
+Gui.FormDate..BackColor(-2147483633)
+Gui.FormDate..MaxButton(False)
+Gui.FormDate..MinButton(False)
+Gui.FormDate..MousePointer(0)
+Gui.FormDate..Sizeable(False)
+Gui.FormDate..Event(UnLoad,FormMain_UnLoad)
+Gui.FormDate.dtpStart.Create(DatePicker)
+Gui.FormDate.dtpStart.Size(1935,285)
+Gui.FormDate.dtpStart.Position(90,420)
+Gui.FormDate.dtpEnd.Create(DatePicker)
+Gui.FormDate.dtpEnd.Size(1935,285)
+Gui.FormDate.dtpEnd.Position(2175,435)
+Gui.FormDate.lblDateStart.Create(Label,"Date Start",True,1695,255,0,105,150,True,0,"Arial",8,-2147483633,0)
+Gui.FormDate.lblDateEnd.Create(Label,"Date End",True,1935,255,0,2190,195,True,0,"Arial",8,-2147483633,0)
+Gui.FormDate.cmdOk.Create(Button)
+Gui.FormDate.cmdOk.Size(855,375)
+Gui.FormDate.cmdOk.Position(120,885)
+Gui.FormDate.cmdOk.Caption("OK")
+Gui.FormDate.cmdOk.Event(Click,cmdOk_Click)
+Gui.FormDate.cmdCancel.Create(Button)
+Gui.FormDate.cmdCancel.Size(855,375)
+Gui.FormDate.cmdCancel.Position(2205,885)
+Gui.FormDate.cmdCancel.Caption("Cancel")
+Gui.FormDate.cmdCancel.Event(Click,cmdCancel_Click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+'Program.External.Include.Library("GRIDFORMATTING.lib")
+Program.Sub.Preflight.End
+
+'collection name is from i.m. sort code
+'promo code is from user 1 order
+'FOB point from order header
+'business channel is from sort on customer master (cust_intl I believe)
+
+'Dictionaries
+'Sales Reps
+Program.Sub.Main.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+
+
+'load the date selection form
+gui.FormDate..Show
+
+
+
+'f.Intrinsic.Control.CallSub(ExportGrid)
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.Catching.Start
+v.Local.sError.declare(string)
+F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5338_SalesHist.g2u",V.Ambient.NewLine,v.Args.sub,V.Args.errorno,V.args.errordesc,V.Local.sError)
+f.Intrinsic.UI.Msgbox(v.Local.sError)
+F.Intrinsic.Control.CallSub(formMain_unload)
+Program.Sub.Catching.End
+
+Program.Sub.FormMain_UnLoad.Start
+f.Intrinsic.Control.End
+Program.Sub.FormMain_UnLoad.End
+
+Program.Sub.picLogo_Click.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+
+f.Intrinsic.Control.If(v.Args.button,=,"Right")
+	Function.Intrinsic.Debug.InvokeDebugger
+	Function.Intrinsic.Debug.Stop
+f.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.picLogo_Click.End
+
+Program.Sub.checkfiles.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.sDir.Declare
+v.Local.sFile.Declare
+v.Local.bExists.Declare
+
+f.Intrinsic.String.Build("{0}\5338.zip",v.Caller.GasDir,v.Local.sFile)
+f.Intrinsic.File.Exists(v.Local.sFile,v.Local.bExists)
+f.Intrinsic.Control.If(v.Local.bExists)
+	'the zip file exists - could be a fresh download, or an update.  Check for the custom\5338 folder
+	f.Intrinsic.String.Build("{0}\custom\5338",v.Caller.GlobalDir,v.Local.sDir)
+	f.Intrinsic.File.DirExists(v.Local.sDir,V.Local.bExists)
+	F.Intrinsic.Control.If(V.Local.bExists)
+		'folder is there, unzip the file in case there are new files
+		f.Automation.Zip.UnZip(v.local.sFile,v.Local.sDir)
+	f.Intrinsic.Control.Else
+		'directory isn't there, create it, then unzip the file
+		f.Intrinsic.File.CreateDir(v.Local.sDir)
+		f.Automation.Zip.UnZip(v.Local.sFile,v.Local.sDir)
+	f.Intrinsic.Control.EndIf
+	'delete the file so we don't have to repeat this until an update is applied
+	f.Intrinsic.File.DeleteFile(v.Local.sFile)
+f.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.checkfiles.End
+
+Program.Sub.get_data_current.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.sSql.Declare
+v.Local.sRet.Declare
+
+
+
+f.ODBC.Connection!coredb.opencompanyconnection
+
+f.Intrinsic.String.Build("SELECT CAST('' AS CHAR(7)) AS INVOICE, OH.ORDER_NO, OH.ORDER_SUFFIX, OH.CUSTOMER, ' ' AS CUSTOMER_NAME, ' ' AS BUYING_GROUP, OH.CUSTOMER_PO, RTRIM(OH.SALESPERSON) as SALESCODE, ' ' AS SALESPERSON, OH.USER_1 AS PROMO_CODE, OH.DATE_ORDER, OH.DATE_SHIPPED, OH.CODE_FOB, OS.CITY_SHIP AS CITY, OS.STATE_SHIP AS STATE, ' ' AS CHANNEL, OL.RECORD_NO AS LINE, OL.PART, OL.LOCATION, OL.DESCRIPTION, ' ' AS CRYSTALS, CAST(OL.QTY_ORDERED AS NUMERIC(12,4)) AS QTY_ORDERED, CAST(OL.QTY_SHIPPED AS NUMERIC(12,4)) AS QTY_SHIPPED, CAST(OL.QTY_BO AS NUMERIC(12,4)) AS QTY_BO, CAST(OL.PRICE AS NUMERIC(12,4)) AS PRICE, CAST((OL.QTY_BO * OL.PRICE) AS NUMERIC(12,4)) AS EXTENDED, ' ' AS CODE_SORT,'' AS VENDOR FROM V_ORDER_HEADER OH LEFT JOIN V_ORDER_LINES OL ON OH.ORDER_NO = OL.ORDER_NO LEFT JOIN V_ORDER_SHIP_TO OS ON OH.ORDER_NO = OS.ORDER_NO WHERE OL.RECORD_NO <> '8000' AND OH.DATE_ORDER BETWEEN '{0}' AND '{1}'",V.Args.START.PervasiveDate,v.Args.END.PervasiveDate,v.Local.sSql)
+
+f.Data.DataTable.CreateFromSQL("dtOECurr","coredb",v.Local.sSql,True)
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+
+Program.Sub.get_data_current.End
+
+Program.Sub.get_data_history.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.sSql.Declare
+
+f.Intrinsic.String.Build("SELECT OH.INVOICE, OH.ORDER_NO, OH.ORDER_SUFFIX, OH.CUSTOMER, ' ' AS CUSTOMER_NAME, ' ' AS BUYING_GROUP, OH.CUSTOMER_PO, RTRIM(OH.SALESMAN) as SALESCODE, ' ' AS SALESPERSON, OH.USER_1 AS PROMO_CODE, OH.DATE_ORDER, OH.DATE_SHIPPED, OH.FOB_INFO AS CODE_FOB, OH.CITY_SHIP AS CITY, OH.STATE_SHIP AS STATE, '' AS CHANNEL, OL.ORDER_LINE AS LINE, OL.PART, OL.LOCATION, OL.DESCRIPTION, ' ' AS CRYSTALS, CAST(OL.QTY_ORDERED AS NUMERIC(12,4)) AS QTY_ORDERED, CAST(OL.QTY_SHIPPED AS NUMERIC(12,4)) AS QTY_SHIPPED, CAST(OL.QTY_BO AS NUMERIC(12,4)) AS QTY_BO, CAST(OL.PRICE AS NUMERIC(12,4)) AS PRICE, CAST((OL.QTY_SHIPPED * OL.PRICE) AS NUMERIC(12,4)) AS EXTENDED, ' ' AS CODE_SORT,' ' AS VENDOR FROM V_ORDER_HIST_HEAD OH LEFT JOIN V_ORDER_HIST_LINE OL ON OH.ORDER_NO = OL.ORDER_NO WHERE OL.ORDER_LINE <> '8000' AND OH.DATE_ORDER BETWEEN '{0}' AND '{1}'",V.Args.START.PervasiveDate,v.Args.END.PervasiveDate,v.Local.sSql)
+
+f.Data.DataTable.CreateFromSQL("dtOEHist","coredb",v.Local.sSql,True)
+
+f.Data.DataTable.Merge("dtOEHist","dtOECurr",True,4)
+
+f.Data.DataTable.Close("dtOEHist")
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.get_data_history.End
+
+Program.Sub.fill_from_dictionary.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+
+
+'fill in the sales persons name
+f.Data.Dictionary.CreateFromSQL("dcPerson","coredb","select RTRIM(salesperson_code), salesperson from v_salespeople",16)
+f.Data.Dictionary.SetDefaultReturn("dcPerson","HOUSE")
+f.Data.DataTable.FillFromDictionary("dtOECurr","dcPerson","SALESCODE","SALESPERSON")
+f.Data.DataTable.RemoveColumn("dtOECurr","salescode")
+
+'fill in the sort code
+f.Data.Dictionary.CreateFromSQL("dcSort","coredb","select part, code_sort from v_inventory_all",20)
+f.Data.Dictionary.SetDefaultReturn("dcSort","")
+f.Data.DataTable.FillFromDictionary("dtOECurr","dcSort","PART","CODE_SORT")
+'fill in the vendor code
+f.Data.Dictionary.CreateFromSQL("dVend","coredb","select part, name_vendor from v_inventory_mst2",20)
+f.Data.Dictionary.SetDefaultReturn("dVend","")
+f.Data.DataTable.FillFromDictionary("dtOECurr","dVend","PART","vendor")
+'fill in the vendor name
+'f.Data.Dictionary.CreateFromSQL("dVendor","coredb","select vendor, name_vendor from v_vendor_master",20)
+'f.Data.Dictionary.SetDefaultReturn("dVendor","")
+'f.Data.DataTable.FillFromDictionary("dtOECurr","dVendor","vendor","name_vendor")
+'fill in the customer name
+f.Data.Dictionary.CreateFromSQL("dCust","coredb","select customer, name_customer from v_customer_master",20)
+f.Data.Dictionary.SetDefaultReturn("dCust","")
+f.Data.DataTable.FillFromDictionary("dtOECurr","dCust","customer","customer_name")
+'fill in the buying group from external_id
+f.Data.Dictionary.CreateFromSQL("dExternal","coredb","select customer, external_id from V_CUST_FORM_INFO",20)
+f.Data.Dictionary.SetDefaultReturn("dExternal","")
+f.Data.DataTable.FillFromDictionary("dtOECurr","dExternal","customer","buying_group")
+'fill in crystals from inv_extra user3.
+f.Data.Dictionary.CreateFromSQL("dCrystal","coredb","select concat(left ((part + '                 '),17),REV) AS PART, USER3 FROM INV_EXTRA",20)
+F.Data.Dictionary.SetDefaultReturn("dCrystal","")
+f.Data.DataTable.FillFromDictionary("dtOECurr","dCrystal","PART","CRYSTALS")
+'Fill in the customer sort from customer_sales.c_sort_1
+f.Data.Dictionary.CreateFromSQL("dSort","coredb","select customer, c_sort_1 from v_customer_sales",20)
+f.Data.Dictionary.SetDefaultReturn("dSort","")
+f.Data.DataTable.FillFromDictionary("dtOECurr","dSort","customer","channel")
+
+F.ODBC.Connection!coredb.close
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.fill_from_dictionary.End
+
+Program.Sub.gridview_current.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+
+
+f.Data.DataView.Create("dtOECurr","dvOECurr",22)
+gui.FormMain.ggcOrders.DataSource("dtOECurr")
+gui.FormMain.ggcOrders.AddGridviewFromDataview("gvOrders","dtOECurr","dvOECurr")
+
+'f.Intrinsic.Control.CallSub(GRIDLIB_formatgrid,"TABLE","dtOECurr","FORM","FormMain","GRIDVIEW","gvOrders","GRIDCONTROL","ggcOrders")
+
+gui.FormMain.ggcOrders.SuspendLayout()
+
+'ORDER_NO
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_NO","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_NO","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_NO","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_NO","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_NO","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_NO","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_NO","Caption","ORDER#")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_NO","MinWidth","60")
+
+'ORDER_SUFFIX
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_SUFFIX","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_SUFFIX","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_SUFFIX","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_SUFFIX","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_SUFFIX","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_SUFFIX","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_SUFFIX","Caption","SUFFIX")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_SUFFIX","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","ORDER_SUFFIX","AllowSize",True)
+'CUSTOMER
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER","Caption","CUSTOMER")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER","AllowSize",True)
+'CUSTOMER_NAME
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_NAME","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_NAME","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_NAME","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_NAME","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_NAME","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_NAME","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_NAME","Caption","CUSTOMER NAME")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_NAME","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_NAME","AllowSize",True)
+'BUYING_GROUP
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","BUYING_GROUP","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","BUYING_GROUP","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","BUYING_GROUP","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","BUYING_GROUP","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","BUYING_GROUP","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","BUYING_GROUP","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","BUYING_GROUP","Caption","BUYING GROUP")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","BUYING_GROUP","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","BUYING_GROUP","AllowSize",True)
+'CUSTOMER_PO
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_PO","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_PO","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_PO","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_PO","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_PO","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_PO","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_PO","Caption","PO")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_PO","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CUSTOMER_PO","AllowSize",True)
+'SALESPERSON
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","SALESPERSON","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","SALESPERSON","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","SALESPERSON","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","SALESPERSON","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","SALESPERSON","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","SALESPERSON","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","SALESPERSON","Caption","SALESPERSON")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","SALESPERSON","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","SALESPERSON","AllowSize",True)
+'USER_2
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PROMO_CODE","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PROMO_CODE","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PROMO_CODE","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PROMO_CODE","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PROMO_CODE","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PROMO_CODE","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PROMO_CODE","Caption","PROMO CODE")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PROMO_CODE","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PROMO_CODE","AllowSize",True)
+'DATE_ORDER
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","HeaderHAlignment","Center")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","CellHAlignment","Center")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","DisplayCustomDateTime","d")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","Caption","DATE ORDERED")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_ORDER","AllowSize",True)
+'DATE_SHIPPED
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","HeaderHAlignment","Center")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","CellHAlignment","Center")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","DisplayCustomDateTime","d")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","Caption","DATE SHIPPED")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DATE_SHIPPED","AllowSize",True)
+'CODE_FOB
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_FOB","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_FOB","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_FOB","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_FOB","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_FOB","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_FOB","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_FOB","Caption","FOB")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_FOB","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_FOB","AllowSize",True)
+'CITY
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CITY","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CITY","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CITY","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CITY","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CITY","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CITY","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CITY","Caption","CITY")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CITY","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CITY","AllowSize",True)
+'STATE
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","STATE","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","STATE","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","STATE","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","STATE","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","STATE","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","STATE","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","STATE","Caption","STATE")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","STATE","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","STATE","AllowSize",True)
+'CHANNEL
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CHANNEL","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CHANNEL","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CHANNEL","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CHANNEL","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CHANNEL","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CHANNEL","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CHANNEL","Caption","CHANNEL")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CHANNEL","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CHANNEL","AllowSize",True)
+'LINE
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LINE","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LINE","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LINE","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LINE","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LINE","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LINE","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LINE","Caption","ORDER LINE")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LINE","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LINE","AllowSize",True)
+'PART
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PART","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PART","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PART","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PART","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PART","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PART","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PART","Caption","PART")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PART","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PART","AllowSize",True)
+'LOCATION
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LOCATION","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LOCATION","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LOCATION","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LOCATION","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LOCATION","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LOCATION","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LOCATION","Caption","LOCATION")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LOCATION","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","LOCATION","AllowSize",True)
+'DESCRIPTION
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DESCRIPTION","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DESCRIPTION","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DESCRIPTION","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DESCRIPTION","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DESCRIPTION","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DESCRIPTION","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DESCRIPTION","Caption","DESCRIPTION")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DESCRIPTION","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","DESCRIPTION","AllowSize",True)
+'CRYSTALS
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CRYSTALS","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CRYSTALS","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CRYSTALS","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CRYSTALS","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CRYSTALS","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CRYSTALS","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CRYSTALS","Caption","CRYSTALS")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CRYSTALS","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CRYSTALS","AllowSize",True)
+'QTY_ORDERED
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","HeaderHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","CellHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","DisplayCustomNumeric","#,##0")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","Caption","QTY ORDERED")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_ORDERED","AllowSize",True)
+'QTY_SHIPPED
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","HeaderHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","CellHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","DisplayCustomNumeric","#,##0")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","Caption","QTY SHIPPED")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_SHIPPED","AllowSize",True)
+'QTY_BO
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","HeaderHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","CellHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","DisplayCustomNumeric","#,##0")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","Caption","QTY BO")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","QTY_BO","AllowSize",True)
+'PRICE
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","HeaderHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","CellHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","DisplayCustomNumeric","$#,##0.00")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","Caption","PRICE")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","PRICE","AllowSize",True)
+'EXTENDED
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","HeaderHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","CellHAlignment","Far")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","DisplayCustomNumeric","$#,##0.00")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","Caption","EXTENDED")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","EXTENDED","AllowSize",True)
+'CODE_SORT
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_SORT","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_SORT","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_SORT","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_SORT","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_SORT","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_SORT","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_SORT","Caption","SORT CODE")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_SORT","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","CODE_SORT","AllowSize",True)
+'VENDOR
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","VENDOR","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","VENDOR","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","VENDOR","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","VENDOR","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","VENDOR","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","VENDOR","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","VENDOR","Caption","VENDOR")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","VENDOR","MinWidth","75")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","VENDOR","AllowSize",True)
+'NAME_VENDOR
+'gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","NAME_VENDOR","HeaderFontBold",True)
+'gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","NAME_VENDOR","Visible",True)
+'gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","NAME_VENDOR","AllowEdit",True)
+'gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","NAME_VENDOR","ReadOnly",True)
+'gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","NAME_VENDOR","HeaderHAlignment","Near")
+'gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","NAME_VENDOR","CellHAlignment","Near")
+'gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","NAME_VENDOR","Caption","VENDOR NAME")
+'INVOICE
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","INVOICE","HeaderFontBold",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","INVOICE","Visible",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","INVOICE","AllowEdit",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","INVOICE","ReadOnly",True)
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","INVOICE","HeaderHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","INVOICE","CellHAlignment","Near")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","INVOICE","Caption","INVOICE")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","INVOICE","MinWidth","60")
+gui.FormMain.ggcOrders.SetColumnProperty("gvOrders","INVOICE","AllowSize",True)
+
+'FORMAT GRID
+gui.FormMain.ggcOrders.SetGridviewProperty("gvOrders","ShowGroupPanel",True)
+gui.FormMain.ggcOrders.SetGridviewProperty("gvOrders","AllowColumnResizing",True)
+gui.FormMain.ggcOrders.SetGridviewProperty("gvOrders","AllowColumnMoving",True)
+gui.FormMain.ggcOrders.SetGridviewProperty("gvOrders","EnableAppearanceOddrow",True)
+'gui.FormMain.ggcOrders.SetGridviewProperty("gvOrders","OptionsFindAlwaysVisible",True)
+'gui.FormMain.ggcOrders.SetGridviewProperty("gvOrders","OptionsViewShowAutoFilterRow",True)
+gui.FormMain.ggcOrders.SetGridviewProperty("gvOrders","OptionsViewColumnAutoWidth",False)
+
+gui.FormMain.ggcOrders.AddSummaryItem("gvOrders","EXTENDED","TOTAL","FLOAT","","","$#,##0.00")
+
+gui.FormMain.ggcOrders.ResumeLayout()
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.gridview_current.End
+
+Program.Sub.ExportGrid.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.sFile.Declare
+v.Local.sDate.Declare
+
+'f.Intrinsic.String.Format(v.Ambient.Date,"MMDDYY",V.Local.sDate)
+'f.Intrinsic.String.Build("{0}\{1}{2}{3}.xls",V.Caller.FilesDir,v.Caller.User,v.Local.sDate,v.Caller.CompanyCode,v.Local.sFile)
+V.Local.sFile.Set(V.Args.FILE)
+
+gui.FormMain.ggcOrders.Export(v.Local.sFile,"xlsx")
+
+f.Intrinsic.Task.ShellExec(0,"OPEN",V.Local.sFile,"",V.Caller.FilesDir,0)
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.ExportGrid.End
+
+Program.Sub.save_to_db.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.sSql.Declare
+
+f.ODBC.Connection!coredb.opencompanyconnection
+
+F.Data.DataTable.AddColumn("dtOECurr","USERID","STRING")
+F.Data.DataTable.SetValue("dtOECurr",-1,"USERID",V.Caller.User.Trim)
+
+F.Intrinsic.String.Build("delete from GCG_5338_SalesHist WHERE USERID = '{0}'",V.Caller.User.Trim,V.Local.sSql)
+f.ODBC.Connection!coredb.execute(v.Local.sSql)
+f.Data.DataTable.SaveToDB("dtOECurr","coredb","GCG_5338_SalesHist","",128)
+
+F.ODBC.Connection!coredb.Close
+
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.save_to_db.End
+
+Program.Sub.cmdOk_Click.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.dStart.Declare
+v.Local.dEnd.Declare
+
+f.Intrinsic.String.Format(v.Screen.FormDate!dtpStart.value,"MM/DD/YYYY",V.Local.dStart)
+F.Intrinsic.String.Format(V.Screen.FormDate!dtpEnd.value,"MM/DD/YYYY",V.Local.dEnd)
+
+gui.FormDate..Visible(False)
+'ui status
+f.Intrinsic.UI.InvokeWaitDialog("checking files..")
+f.Intrinsic.Control.CallSub(checkfiles)
+
+f.Intrinsic.UI.ChangeWaitStatus("Getting Current Sales...")
+f.Intrinsic.Control.CallSub(get_data_current,"START",V.Local.dStart,"END",V.Local.dEnd)
+
+f.Intrinsic.UI.ChangeWaitStatus("Getting Sales History...")
+f.Intrinsic.Control.CallSub(get_data_history,"START",V.Local.dStart,"END",V.Local.dEnd)
+
+f.Intrinsic.UI.ChangeWaitStatus("Cleaning up data...")
+f.Intrinsic.Control.CallSub(fill_from_dictionary)
+
+''COMMENTED OUT - CUSTOMER WANTS DATA SAVED TO DB
+f.Intrinsic.UI.ChangeWaitStatus("Formatting view...")
+f.Intrinsic.Control.CallSub(gridview_current)
+
+'save to table.
+F.Intrinsic.UI.ChangeWaitStatus("Saving to database...")
+f.Intrinsic.Control.CallSub(save_to_db)
+
+f.Intrinsic.UI.CloseWaitDialog
+
+F.Intrinsic.UI.Msgbox("Complete!","Data Build")
+
+F.Intrinsic.Control.End
+'blink the form
+
+'gui.FormMain..Show
+
+'gui.FormMain..Visible(False)
+'f.Intrinsic.UI.CloseWaitDialog
+'f.Intrinsic.UI.Msgbox("Complete!","Data Saved")
+
+'F.Intrinsic.Control.CallSub(formMain_Unload)
+
+
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdOk_Click.End
+
+Program.Sub.cmdCancel_Click.Start
+f.Intrinsic.Control.CallSub(formMain_Unload)
+Program.Sub.cmdCancel_Click.End
+
+Program.Sub.cmdExport_Click.Start
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.sFile.Declare
+
+f.Intrinsic.UI.ShowSaveFileDialog("","*.xlsx|xlsx",v.local.sFile)
+
+f.Intrinsic.Control.If(v.Local.sFile,<>,v.Ambient.cancel)
+	F.Intrinsic.Control.If(V.Local.sFile.Right4,<>,"xlsx")
+		f.Intrinsic.String.Build("{0}.xlsx",v.Local.sFile,v.Local.sFile)
+	F.Intrinsic.Control.EndIf
+	f.Intrinsic.Control.CallSub(exportgrid,"FILE",V.Local.sFile)
+f.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdExport_Click.End
